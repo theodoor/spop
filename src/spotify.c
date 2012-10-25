@@ -46,7 +46,7 @@ static sp_playlist* g_starred_playlist = NULL;
 
 static sp_session* g_session = NULL;
 
-static unsigned int g_audio_time = 0;
+static guint g_audio_time = 0;
 static unsigned int g_audio_samples = 0;
 static unsigned int g_audio_rate = 44100;
 
@@ -273,16 +273,16 @@ void session_play(gboolean play) {
     cb_notify_main_thread(NULL);
 }
 
-void session_seek(int pos) {
-    sp_session_player_seek(g_session, pos*1000);
+void session_seek(guint pos) {
+    sp_session_player_seek(g_session, pos);
     g_audio_time = pos;
     g_audio_samples = 0;
 
     cb_notify_main_thread(NULL);
 }
 
-int session_play_time() {
-    return g_audio_time + (g_audio_samples / g_audio_rate);
+guint session_play_time() {
+    return g_audio_time + (1000 * g_audio_samples) / g_audio_rate;
 }
 
 void session_get_offline_sync_status(sp_offline_sync_status* status, gboolean* sync_in_progress,
@@ -381,7 +381,7 @@ GArray* tracks_get_playlist(sp_playlist* pl) {
 }
 
 void track_get_data(sp_track* track, gchar** name, gchar** artist, gchar** album, gchar** link,
-                    int* duration, int* popularity) {
+                    guint* duration, int* popularity) {
     sp_artist** art = NULL;
     sp_album* alb = NULL;
     sp_link* lnk;
@@ -429,7 +429,7 @@ void track_get_data(sp_track* track, gchar** name, gchar** artist, gchar** album
         sp_link_release(lnk);
     }
     if (duration) {
-        *duration = sp_track_duration(track) / 1000;
+        *duration = sp_track_duration(track);
     }
     if (popularity) {
         *popularity = sp_track_popularity(track);
@@ -522,6 +522,63 @@ gboolean track_get_image_data(sp_track* track, gpointer* data, gsize* len) {
     return TRUE;
 }
 
+static void _track_write_image_to_file(sp_image* img, gpointer data) {
+    GError* err = NULL;
+    const guchar* img_data = NULL;
+    gsize len;
+    gchar* filename = (gchar*) data;
+
+    img_data = sp_image_data(img, &len);
+    if (!img_data)
+        g_error("Can't read image data");
+    g_debug("Saving image to %s", filename);
+    if (!g_file_set_contents(filename, (gchar*) img_data, len, &err))
+        g_error("Can't save image to file: %s", err->message);
+    g_free(filename);
+    sp_image_release(img);
+}
+
+gboolean track_get_image_file(sp_track* track, gchar** filename) {
+    if (!filename)
+         return FALSE;
+
+    sp_image* img = track_get_image(track);
+    if (!img) {
+        /* No cover */
+        *filename = NULL;
+        return FALSE;
+    }
+
+    /* Build filename */
+    const guchar* img_id = sp_image_image_id(img);
+    gchar* b64_id = g_base64_encode(img_id, 20);
+    gchar* img_name = g_strdup_printf("%s.jpg", b64_id);
+    /* Avoid / in base64-encoded file name! */
+    g_strdelimit(img_name, "/", '_');
+    *filename = g_build_filename(g_get_user_cache_dir(), g_get_prgname(), img_name, NULL);
+    g_free(b64_id);
+    g_free(img_name);
+
+    /* If the file already exists, we're done. */
+    if (g_file_test(*filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+        sp_image_release(img);
+    }
+
+    /* If image is already loaded, write it to the file now */
+    else if (sp_image_is_loaded(img)) {
+        gchar* fn_copy = g_strdup(*filename);
+        _track_write_image_to_file(img, fn_copy);
+    }
+
+    /* Load the image and write it with a callback */
+    else {
+        gchar* fn_copy = g_strdup(*filename);
+        sp_image_add_load_callback(img, _track_write_image_to_file, fn_copy);
+    }
+
+    return TRUE;
+}
+
 
 /****************
  *** Browsing ***
@@ -611,7 +668,7 @@ int cb_music_delivery(sp_session* session, const sp_audioformat* format, const v
         g_audio_samples += n;
     }
     else if (n > 0) {
-        g_audio_time += g_audio_samples / g_audio_rate;
+        g_audio_time += (1000 * g_audio_samples) / g_audio_rate;
         g_audio_samples = n;
         g_audio_rate = format->sample_rate;
     }

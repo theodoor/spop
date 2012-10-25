@@ -125,11 +125,13 @@ static void now_playing_request(sp_track* track) {
 
     /* Get some informations about the current track */
     td = g_malloc(sizeof(track_data));
-    track_get_data(track, &td->track, &td->artist, &td->album, NULL, &td->length, NULL);
+    guint length_ms;
+    track_get_data(track, &td->track, &td->artist, &td->album, NULL, &length_ms, NULL);
 
     if (!td->artist) td->artist = g_strdup("");
     if (!td->track)  td->track  = g_strdup("");
     if (!td->album)  td->album  = g_strdup("");
+    td->length = length_ms / 1000;
 
     td->np_submitted = FALSE;
     td->np_submitting = FALSE;
@@ -176,7 +178,7 @@ static gboolean now_playing_handler(gpointer data) {
         return FALSE;
 
     /* Prepare the message and queue it */
-    len = g_strdup_printf("%d", td->length);
+    len = g_strdup_printf("%u", td->length);
     g_debug("scrobble: Sending \"Now playing\" request for \"%s - %s\"", td->artist, td->track);
     message = soup_form_request_new("POST", g_nowplaying_url,
                                     "s", g_token,
@@ -196,7 +198,7 @@ static gboolean now_playing_handler(gpointer data) {
 
 static void now_playing_callback(SoupSession* session, SoupMessage* msg, gpointer user_data) {
     track_data* td = user_data;
-    
+
     td->np_submitting = FALSE;
 
     /* Success? */
@@ -235,7 +237,7 @@ static void scrobble_request() {
     }
     td = g_tracks->data;
 
-    td->play_time = session_play_time();
+    td->play_time = session_play_time() / 1000;
     /* Try to scrobble this. If it fails, try again in a second */
     if (scrobble_handler(NULL))
         g_timeout_add_seconds(1, scrobble_handler, NULL);
@@ -274,7 +276,7 @@ static gboolean scrobble_handler(gpointer data) {
         /* Should this track be scrobbled?
            - longer than 30 seconds
            - played for at least 240 seconds, or half of the track, whichever
-             comes first 
+             comes first
            - not scrobbled yet */
         if (td->scrobbled || td->scrobbling) {
             continue;
@@ -290,7 +292,7 @@ static gboolean scrobble_handler(gpointer data) {
                                 g_strdup(td->artist));
             g_hash_table_insert(h,
                                 g_strdup_printf("t[%d]", i),
-                                g_strdup(td->track)); 
+                                g_strdup(td->track));
             g_hash_table_insert(h,
                                 g_strdup_printf("i[%d]", i),
                                 g_strdup_printf("%ld", td->start));
@@ -404,7 +406,7 @@ static void token_request() {
     password_md5 = g_compute_checksum_for_string(G_CHECKSUM_MD5, password, -1);
     auth_token = g_string_new(password_md5);
     g_free(password_md5);
-    
+
     t = time(NULL);
     if (t == -1)
         g_error("scrobble: Can't get current time: %s", g_strerror(errno));
@@ -440,13 +442,13 @@ static void token_request() {
         g_free(uri_string);
     }
     g_free(timestamp);
-    g_free(auth_token_md5);    
+    g_free(auth_token_md5);
 
     /* Prepare the message and queue it*/
     message = soup_message_new_from_uri("GET", uri);
     soup_session_queue_message(g_session, message, token_callback, NULL);
     g_token_requested = TRUE;
-    
+
     /* Cleanup */
     soup_uri_free(uri);
 }
@@ -501,7 +503,7 @@ static void token_callback(SoupSession* session, SoupMessage* msg, gpointer user
     if (g_nowplaying_url)
         g_free(g_nowplaying_url);
     g_nowplaying_url = g_strndup(bol, eol-bol);
-    
+
     /* Read the fourth line: scrobble URL */
     len -= (eol-bol) + 1;
     bol = eol+1;
