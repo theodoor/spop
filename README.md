@@ -106,7 +106,7 @@ official Spotify client. Then, you will be able to use the following commands:
 ---
 
 - `play`: start playing from the queue
-- `toggle` or `pause`: toggle pause mode
+- `toggle`: toggle pause mode
 - `stop`: stop playback
 - `seek pos`: go to position `pos` (in seconds) in the current track
 - `next`: switch to the next track in the queue
