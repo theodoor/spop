@@ -80,15 +80,15 @@ target_link_libraries(spopd dl ${SPOTIFY_LIBRARIES} ${GLIB2_LIBRARIES}
 set(targets ${targets} spopd)
 
 # Audio plugin: OSS
-set(AUDIO_OSS
-  plugins/oss.c
-)
-add_library(spop_audio_oss MODULE ${AUDIO_OSS})
-set_target_properties(spop_audio_oss PROPERTIES
-  COMPILE_FLAGS "${GLIB2_CFLAGS}"
-)
-target_link_libraries(spop_audio_oss ${GLIB2_LIBRARIES})
-set(targets ${targets} spop_audio_oss)
+#set(AUDIO_OSS
+#  plugins/oss.c
+#)
+#add_library(spop_audio_oss MODULE ${AUDIO_OSS})
+#set_target_properties(spop_audio_oss PROPERTIES
+#  COMPILE_FLAGS "${GLIB2_CFLAGS}"
+#)
+#target_link_libraries(spop_audio_oss ${GLIB2_LIBRARIES})
+#set(targets ${targets} spop_audio_oss)
 
 # Audio plugin: libao
 if(AO_FOUND)
@@ -130,48 +130,48 @@ if(SOX_FOUND)
 endif(SOX_FOUND)
 
 # Generic plugin: awesome
-if(DBUS_FOUND)
-  set(PLUGIN_AWESOME
-    plugins/awesome.c
-  )
-  add_library(spop_plugin_awesome MODULE ${PLUGIN_AWESOME})
-  set_target_properties(spop_plugin_awesome PROPERTIES
-    COMPILE_FLAGS "${DBUS_CFLAGS} ${GLIB2_CFLAGS}"
-  )
-  target_link_libraries(spop_plugin_awesome ${DBUS_LIBRARIES} ${GLIB2_LIBRARIES})
-  set(targets ${targets} spop_plugin_awesome)
-  install(DIRECTORY awesome DESTINATION share/spop)
-endif(DBUS_FOUND)
+#if(DBUS_FOUND)
+#  set(PLUGIN_AWESOME
+#    plugins/awesome.c
+#  )
+#  add_library(spop_plugin_awesome MODULE ${PLUGIN_AWESOME})
+#  set_target_properties(spop_plugin_awesome PROPERTIES
+#    COMPILE_FLAGS "${DBUS_CFLAGS} ${GLIB2_CFLAGS}"
+#  )
+#  target_link_libraries(spop_plugin_awesome ${DBUS_LIBRARIES} ${GLIB2_LIBRARIES})
+#  set(targets ${targets} spop_plugin_awesome)
+#  install(DIRECTORY awesome DESTINATION share/spop)
+#endif(DBUS_FOUND)
 
 # Generic plugin: mpris2
-if(GIO_UNIX_FOUND)
-  macro(GDBUS_CODEGEN DIR XML IFACE_PREFIX CCODE NAMESPACE)
-    add_custom_command(
-      OUTPUT "${DIR}/${CCODE}.c"
-      OUTPUT "${DIR}/${CCODE}.h"
-      COMMAND gdbus-codegen --interface-prefix="${IFACE_PREFIX}" --generate-c-code="${CCODE}" --c-namespace="${NAMESPACE}" "${XML}"
-      WORKING_DIRECTORY "${DIR}"
-      MAIN_DEPENDENCY "${DIR}/${XML}"
-    )
-  endmacro(GDBUS_CODEGEN)
-  gdbus_codegen("${CMAKE_CURRENT_SOURCE_DIR}/plugins/mpris2" "mpris2.xml"
-                org.mpris.MediaPlayer2 mpris2-generated Mpris2)
-  gdbus_codegen("${CMAKE_CURRENT_SOURCE_DIR}/plugins/mpris2" "mpris2-player.xml"
-                org.mpris.MediaPlayer2 mpris2-player-generated Mpris2)
+#if(GIO_UNIX_FOUND)
+#  macro(GDBUS_CODEGEN DIR XML IFACE_PREFIX CCODE NAMESPACE)
+#    add_custom_command(
+#      OUTPUT "${DIR}/${CCODE}.c"
+#      OUTPUT "${DIR}/${CCODE}.h"
+#      COMMAND gdbus-codegen --interface-prefix="${IFACE_PREFIX}" --generate-c-code="${CCODE}" --c-namespace="${NAMESPACE}" "${XML}"
+#      WORKING_DIRECTORY "${DIR}"
+#      MAIN_DEPENDENCY "${DIR}/${XML}"
+#    )
+#  endmacro(GDBUS_CODEGEN)
+#  gdbus_codegen("${CMAKE_CURRENT_SOURCE_DIR}/plugins/mpris2" "mpris2.xml"
+#                org.mpris.MediaPlayer2 mpris2-generated Mpris2)
+#  gdbus_codegen("${CMAKE_CURRENT_SOURCE_DIR}/plugins/mpris2" "mpris2-player.xml"
+#                org.mpris.MediaPlayer2 mpris2-player-generated Mpris2)
 
-  set(PLUGIN_MPRIS2
-    plugins/mpris2/mpris2-generated.c
-    plugins/mpris2/mpris2-player-generated.c
-    plugins/mpris2/plugin.c
-    plugins/mpris2/spop-mpris2.c
-  )
-  add_library(spop_plugin_mpris2 MODULE ${PLUGIN_MPRIS2})
-  set_target_properties(spop_plugin_mpris2 PROPERTIES
-    COMPILE_FLAGS "${GIO_UNIX_CFLAGS} ${GLIB2_CFLAGS}"
-  )
-  target_link_libraries(spop_plugin_mpris2 ${GIO_UNIX_LIBRARIES} ${GLIB2_LIBRARIES})
-  set(targets ${targets} spop_plugin_mpris2)
-endif(GIO_UNIX_FOUND)
+#  set(PLUGIN_MPRIS2
+#    plugins/mpris2/mpris2-generated.c
+#    plugins/mpris2/mpris2-player-generated.c
+#    plugins/mpris2/plugin.c
+#    plugins/mpris2/spop-mpris2.c
+#  )
+#  add_library(spop_plugin_mpris2 MODULE ${PLUGIN_MPRIS2})
+#  set_target_properties(spop_plugin_mpris2 PROPERTIES
+#    COMPILE_FLAGS "${GIO_UNIX_CFLAGS} ${GLIB2_CFLAGS}"
+#  )
+#  target_link_libraries(spop_plugin_mpris2 ${GIO_UNIX_LIBRARIES} ${GLIB2_LIBRARIES})
+#  set(targets ${targets} spop_plugin_mpris2)
+#endif(GIO_UNIX_FOUND)
 
 # Generic plugin: notify
 if(NOTIFY_FOUND)
@@ -187,15 +187,15 @@ if(NOTIFY_FOUND)
 endif(NOTIFY_FOUND)
 
 # Generic plugin: savestate
-set(PLUGIN_SAVESTATE
-  plugins/savestate.c
-)
-add_library(spop_plugin_savestate MODULE ${PLUGIN_SAVESTATE})
-set_target_properties(spop_plugin_savestate PROPERTIES
-  COMPILE_FLAGS "${GLIB2_CFLAGS} ${JSON_GLIB_CFLAGS}"
-)
-target_link_libraries(spop_plugin_savestate ${GLIB2_LIBRARIES} ${JSON_GLIB_LIBRARIES})
-set(targets ${targets} spop_plugin_savestate)
+#set(PLUGIN_SAVESTATE
+#  plugins/savestate.c
+#)
+#add_library(spop_plugin_savestate MODULE ${PLUGIN_SAVESTATE})
+#set_target_properties(spop_plugin_savestate PROPERTIES
+#  COMPILE_FLAGS "${GLIB2_CFLAGS} ${JSON_GLIB_CFLAGS}"
+#)
+#target_link_libraries(spop_plugin_savestate ${GLIB2_LIBRARIES} ${JSON_GLIB_LIBRARIES})
+#set(targets ${targets} spop_plugin_savestate)
 
 # Generic plugin: scrobble
 if(SOUP_FOUND)
