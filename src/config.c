@@ -38,8 +38,8 @@ static GKeyFile* g_config_file = NULL;
 /* Internal function: initialize the data structure and load the config file */
 static void config_ready() {
     gchar* cfg_path;
-    GError* err;
-
+    GError* err = NULL;
+    
     g_static_mutex_lock(&config_mutex);
 
     if (g_config_file) {
@@ -57,7 +57,7 @@ static void config_ready() {
     cfg_path = g_build_filename(g_get_user_config_dir(), g_get_prgname(), "spopd.conf", NULL);
 
     if (!g_key_file_load_from_file(g_config_file, cfg_path, G_KEY_FILE_NONE, &err))
-        g_error("Can't read configuration file: %s", err->message);
+        g_error("Can't read configuration file (%s/%s/spopd.conf): %s", g_get_user_config_dir(), g_get_prgname(), err->message);
     g_free(cfg_path);
     g_static_mutex_unlock(&config_mutex);
 }
