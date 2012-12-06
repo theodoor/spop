@@ -330,6 +330,7 @@ gboolean status(command_context* ctx) {
     gchar* track_artist;
     gchar* track_album;
     gchar* track_link;
+    gchar* track_image;
 
     qs = queue_get_status(&track, &track_nb, &total_tracks);
 
@@ -347,6 +348,7 @@ gboolean status(command_context* ctx) {
         track_get_data(track, &track_name, &track_artist, &track_album, &track_link,
                        &track_duration, &track_popularity);
         track_position = session_play_time();
+        track_get_image_file(track, &track_image);
 
         jb_add_string(ctx->jb, "artist", track_artist);
         jb_add_string(ctx->jb, "title", track_name);
@@ -355,10 +357,12 @@ gboolean status(command_context* ctx) {
         jb_add_double(ctx->jb, "position", track_position/1000.);
         jb_add_string(ctx->jb, "uri", track_link);
         jb_add_int(ctx->jb, "popularity", track_popularity);
+        jb_add_string(ctx->jb, "image", track_image);
         g_free(track_name);
         g_free(track_artist);
         g_free(track_album);
         g_free(track_link);
+        g_free(track_image);
     }
     return TRUE;
 }
