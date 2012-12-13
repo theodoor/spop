@@ -56,6 +56,7 @@ static void json_tracks_array(GArray* tracks, JsonBuilder* jb) {
     sp_track* track;
 
     bool track_avail;
+    bool track_starred;
     guint track_duration;
     int track_popularity;
     gchar* track_name;
@@ -69,6 +70,7 @@ static void json_tracks_array(GArray* tracks, JsonBuilder* jb) {
         if (!sp_track_is_loaded(track)) continue;
 
         track_avail = track_available(track);
+        track_starred = is_track_starred(track);
         track_get_data(track, &track_name, &track_artist, &track_album, &track_link,
                        &track_duration, &track_popularity);
 
@@ -81,6 +83,7 @@ static void json_tracks_array(GArray* tracks, JsonBuilder* jb) {
         jb_add_bool(jb, "available", track_avail);
         jb_add_int(jb, "popularity", track_popularity);
         jb_add_int(jb, "index", i+1);
+        jb_add_bool(jb, "starred", track_starred);
         json_builder_end_object(jb);
 
         g_free(track_name);
@@ -162,6 +165,10 @@ gboolean command_run(command_finalize_func finalize, gpointer finalize_data, com
         if (desc->args[1] == CA_NONE) {
             gboolean (*cmd)(command_context*, const gchar*) = desc->func;
             ret = cmd(ctx, arg1);
+        }
+        else if(desc->args[1] == CA_STR){
+            gboolean (*cmd)(command_context*, const gchar*, const gchar*) = desc->func;
+            ret = cmd(ctx, arg1, argv[2]);
         }
         else
             g_error("Unknown argument type");
@@ -331,8 +338,10 @@ gboolean status(command_context* ctx) {
     gchar* track_album;
     gchar* track_link;
     gchar* track_image;
-
+    gchar* username;
+    
     qs = queue_get_status(&track, &track_nb, &total_tracks);
+    
 
     jb_add_string(ctx->jb, "status",
                   (qs == PLAYING) ? "playing"
@@ -341,6 +350,13 @@ gboolean status(command_context* ctx) {
     jb_add_bool(ctx->jb, "repeat", queue_get_repeat());
     jb_add_bool(ctx->jb, "shuffle", queue_get_shuffle());
     jb_add_int(ctx->jb, "total_tracks", total_tracks);
+    if(get_username(&username)){
+        jb_add_string(ctx->jb, "login_status", "logged_in");
+        jb_add_string(ctx->jb, "username", username);
+    }
+    else{
+        jb_add_string(ctx->jb, "login_status", "logged_out");
+    }
 
     if (qs != STOPPED) {
         jb_add_int(ctx->jb, "current_track", track_nb+1);
@@ -358,6 +374,7 @@ gboolean status(command_context* ctx) {
         jb_add_string(ctx->jb, "uri", track_link);
         jb_add_int(ctx->jb, "popularity", track_popularity);
         jb_add_string(ctx->jb, "image", track_image);
+       
         g_free(track_name);
         g_free(track_artist);
         g_free(track_album);
@@ -1183,6 +1200,61 @@ gboolean uri_add(command_context* ctx, sp_link* lnk) {
 gboolean uri_play(command_context* ctx, sp_link* lnk) {
     return _uri_add_play(ctx, lnk, TRUE);
 }
+
+gboolean uri_star(command_context* ctx, sp_link* lnk){
+    sp_linktype type = sp_link_type(lnk);
+    gboolean done = TRUE;
+
+    switch(type) {
+    case SP_LINKTYPE_INVALID:
+        jb_add_string(ctx->jb, "error", "invalid URI");
+        sp_link_release(lnk);
+        break;
+    case SP_LINKTYPE_TRACK: {
+        int offset;
+        sp_track* track = sp_link_as_track_and_offset(lnk, &offset);
+        if (!track) {
+            jb_add_string(ctx->jb, "error", "can't retrieve track");
+            sp_link_release(lnk);
+            break;
+        }
+        track_set_starred(track);
+        done = FALSE;
+
+        break;
+    }
+    case SP_LINKTYPE_ALBUM: {
+        sp_album* album = sp_link_as_album(lnk);
+        if (!album) {
+            jb_add_string(ctx->jb, "error", "can't retrieve album");
+            sp_link_release(lnk);
+            break;
+        }
+        //TODO
+        done = FALSE;
+        break;
+    }
+    case SP_LINKTYPE_PLAYLIST: {
+        sp_playlist* pl = playlist_get_from_link(lnk);
+        if (!pl) {
+            jb_add_string(ctx->jb, "error", "can't retrieve playlist");
+            sp_link_release(lnk);
+            break;
+        }
+       //TODO
+        done = FALSE;
+
+        break;
+    }
+    default:
+        jb_add_string(ctx->jb, "error", "not implemented");
+        sp_link_release(lnk);
+        break;
+    }
+
+    return done;
+}
+
 /* }}} */
 /* {{{ Search */
 static void _search_cb(sp_search* srch, gpointer userdata) {
@@ -1304,5 +1376,15 @@ gboolean search(command_context* ctx, const gchar* query) {
         jb_add_string(ctx->jb, "error", "can't create search");
         return TRUE;
     }
+}
+
+gboolean login(command_context* ctx, const gchar* username, const gchar* passwd){
+    session_login(username, passwd);
+    return TRUE;
+}
+
+gboolean logout(command_context* ctx){
+    session_logout();
+    return TRUE;
 }
 /* }}} */

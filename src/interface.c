@@ -96,8 +96,13 @@ static command_full_descriptor g_commands[] = {
     { "uinfo",   CT_FUNC, { uri_info, {CA_URI, CA_NONE}}},
     { "uadd",    CT_FUNC, { uri_add,  {CA_URI, CA_NONE}}},
     { "uplay",   CT_FUNC, { uri_play, {CA_URI, CA_NONE}}},
+    { "ustar", CT_FUNC, { uri_star, {CA_URI, CA_NONE}}},
 
     { "search",  CT_FUNC, { search, {CA_STR, CA_NONE}}},
+    
+    { "login", CT_FUNC, { login, {CA_STR, CA_STR}}},
+    { "logout", CT_FUNC, { logout, {CA_NONE}}},
+    
 
     { "bye",     CT_BYE,  {}},
     { "quit",    CT_QUIT, {}},
@@ -419,7 +424,7 @@ void interface_notify() {
     g_object_unref(gen);
     g_object_unref(jb);
     g_free(tmp);
-
+    
     /* First notify idle channels */
     g_list_foreach(g_idle_channels, interface_notify_chan, str);
     g_list_free(g_idle_channels);

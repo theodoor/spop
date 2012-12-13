@@ -467,6 +467,10 @@ gboolean track_available(sp_track* track) {
     return (sp_track_get_availability(g_session, track) == SP_TRACK_AVAILABILITY_AVAILABLE);
 }
 
+gboolean is_track_starred(sp_track* track){
+    return (sp_track_is_starred(g_session, track));
+}
+
 sp_image* track_get_image(sp_track* track) {
     sp_album* alb = NULL;
     sp_image* img = NULL;
@@ -625,17 +629,39 @@ gboolean session_next_track_event(gpointer data) {
     return FALSE;
 }
 
+gboolean track_set_starred(sp_track* track){
+    if(sp_track_is_starred(g_session, track)){
+        return (sp_track_set_starred(g_session, &track, 1, FALSE) == SP_ERROR_OK);
+    }
+    else{
+        return (sp_track_set_starred(g_session, &track, 1, TRUE) == SP_ERROR_OK);
+    }
+}
+
+gboolean get_username(gchar** username){
+    if(sp_session_user(g_session)){
+        *username = (gchar*)sp_user_canonical_name(sp_session_user(g_session));
+        return TRUE;
+    }
+    else{
+        *username = "No user";
+        return FALSE;
+    }
+}
 
 /******************************************
  *** Callbacks, not to be used directly ***
  ******************************************/
 void cb_logged_in(sp_session* session, sp_error error) {
-    if (error != SP_ERROR_OK)
+    if (error != SP_ERROR_OK){
         g_warning("Login failed: %s", sp_error_message(error));
+        return;
+    }
     else g_info("Logged in.");
 
     /* Get the playlists container */
     g_container = sp_session_playlistcontainer(g_session);
+          
     if (!g_container)
         g_error("Could not get the playlist container.");
 

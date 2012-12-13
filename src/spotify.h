@@ -68,6 +68,7 @@ gboolean session_remove_callback(spop_session_callback_ptr func, gpointer user_d
 GArray* tracks_get_playlist(sp_playlist* pl);
 void track_get_data(sp_track* track, gchar** name, gchar** artist, gchar** album, gchar** link, guint* duration, int* popularity);
 gboolean track_available(sp_track* track);
+gboolean is_track_starred(sp_track* track);
 
 sp_image* track_get_image(sp_track* track);
 gboolean track_get_image_data(sp_track* track, gpointer* data, gsize* len);
@@ -81,6 +82,11 @@ sp_search* search_create(const gchar* query, search_complete_cb* callback, gpoin
 /* Events management */
 gboolean session_libspotify_event(gpointer data);
 gboolean session_next_track_event(gpointer data);
+
+gboolean track_set_starred(sp_track* track);
+
+gboolean get_username(gchar** username);
+
 
 /* Callbacks */
 void cb_logged_in(sp_session* session, sp_error error);

@@ -83,7 +83,12 @@ gboolean image(command_context* ctx);
 gboolean uri_info(command_context* ctx, sp_link* lnk);
 gboolean uri_add(command_context* ctx, sp_link* lnk);
 gboolean uri_play(command_context* ctx, sp_link* lnk);
+gboolean uri_star(command_context* ctx, sp_link* lnk);
 
 gboolean search(command_context* ctx, const gchar* query);
+
+gboolean login(command_context* ctx, const gchar* username, const gchar* passwd);
+gboolean logout(command_context*);
+
 
 #endif
