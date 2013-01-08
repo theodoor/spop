@@ -1417,10 +1417,19 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
         gchar uri[1024];
         
         json_builder_set_member_name(ctx->jb, "toplist");
-        
+                     
         json_builder_begin_object(ctx->jb);
         
-        json_builder_set_member_name(ctx->jb, "result");
+        if(sp_toplistbrowse_num_albums(result) >= 1){
+            json_builder_set_member_name(ctx->jb, "albums");
+        }
+        else if(sp_toplistbrowse_num_tracks(result) >= 1)
+        {
+            json_builder_set_member_name(ctx->jb, "tracks");
+        }
+        else if(sp_toplistbrowse_num_artists(result) >= 1){
+            json_builder_set_member_name(ctx->jb, "artists");
+        }
                      
         json_builder_begin_array(ctx->jb);
         
@@ -1457,7 +1466,7 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
         {
             json_builder_begin_object(ctx->jb);
             sp_track* track = sp_toplistbrowse_track(result, i);
-            jb_add_string(ctx->jb, "tracks", sp_track_name(track));
+            jb_add_string(ctx->jb, "track", sp_track_name(track));
             sp_link_as_string(sp_link_create_from_track(track, 0), uri, 1024);
             jb_add_string(ctx->jb, "uri", uri);
             jb_add_string(ctx->jb, "artist", sp_artist_name(sp_track_artist(track, 0)));
