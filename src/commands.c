@@ -1411,75 +1411,72 @@ gboolean logout(command_context* ctx){
 }
 
 static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
-        command_context* ctx = (command_context*) userdata;
-        
-        int i;
-        gchar uri[1024];
-        
-        json_builder_set_member_name(ctx->jb, "toplist");
-                     
-        json_builder_begin_object(ctx->jb);
-        
-        if(sp_toplistbrowse_num_albums(result) >= 1){
-            json_builder_set_member_name(ctx->jb, "albums");
-        }
-        else if(sp_toplistbrowse_num_tracks(result) >= 1)
-        {
-            json_builder_set_member_name(ctx->jb, "tracks");
-        }
-        else if(sp_toplistbrowse_num_artists(result) >= 1){
-            json_builder_set_member_name(ctx->jb, "artists");
-        }
-                     
-        json_builder_begin_array(ctx->jb);
-        
-        
-        
-        
-        
-        // We print from all types. Only one of the loops will acually yield anything.
+    command_context* ctx = (command_context*) userdata;
 
-        for(i = 0; i < sp_toplistbrowse_num_artists(result); i++)
-        {
-            json_builder_begin_object(ctx->jb);
-            sp_artist* artist = sp_toplistbrowse_artist(result, i);
-            jb_add_string(ctx->jb, "artist", sp_artist_name(artist));
-            sp_link_as_string(sp_link_create_from_artist(artist), uri, 1024);
-            
-            jb_add_string(ctx->jb, "uri", uri);
-            json_builder_end_object(ctx->jb);
-        }
-            
-        for(i = 0; i < sp_toplistbrowse_num_albums(result); i++)
-        {
-            json_builder_begin_object(ctx->jb);
-            sp_album* album = sp_toplistbrowse_album(result, i);
-            jb_add_string(ctx->jb, "album", sp_album_name(album));
-            jb_add_string(ctx->jb, "artist",sp_artist_name(sp_album_artist(album)));
-            sp_link_as_string(sp_link_create_from_album(album), uri, 1024);
-            jb_add_string(ctx->jb, "uri", uri);
-            json_builder_end_object(ctx->jb);
-        }
-
-            
-        for(i = 0; i < sp_toplistbrowse_num_tracks(result); i++)
-        {
-            json_builder_begin_object(ctx->jb);
-            sp_track* track = sp_toplistbrowse_track(result, i);
-            jb_add_string(ctx->jb, "track", sp_track_name(track));
-            sp_link_as_string(sp_link_create_from_track(track, 0), uri, 1024);
-            jb_add_string(ctx->jb, "uri", uri);
-            jb_add_string(ctx->jb, "artist", sp_artist_name(sp_track_artist(track, 0)));
-            json_builder_end_object(ctx->jb);
-        }
-       
+    int i, n;
+    gchar uri[1024];
         
-        json_builder_end_array(ctx->jb);
-        json_builder_end_object(ctx->jb);
+    json_builder_set_member_name(ctx->jb, "toplist");
+
+    json_builder_begin_object(ctx->jb);
+    n = sp_toplistbrowse_num_tracks(result);
+     
+   jb_add_int(ctx->jb, "total_tracks", n);
+   jb_add_int(ctx->jb, "total_albums", sp_toplistbrowse_num_albums(result));
+   jb_add_int(ctx->jb, "total_artists", sp_toplistbrowse_num_artists(result));
+
    
-        sp_toplistbrowse_release(result);
-        
-         command_end(ctx);
+    GArray* tracks = g_array_sized_new(FALSE, FALSE, sizeof (sp_track*), n);
+    if (!tracks)
+        g_error("Can't allocate array of %d tracks.", n);
+    for (i = 0; i < n; i++) {
+        sp_track* tr = sp_toplistbrowse_track(result, i);
+        g_array_append_val(tracks, tr);
+    }
+
+    json_builder_set_member_name(ctx->jb, "tracks");
+    json_builder_begin_array(ctx->jb);
+    json_tracks_array(tracks, ctx->jb);
+    json_builder_end_array(ctx->jb);
+    g_array_free(tracks, TRUE);
+
+
+
+    // We print from all types. Only one of the loops will acually yield anything.
+    json_builder_set_member_name(ctx->jb, "artists");
+        json_builder_begin_array(ctx->jb);
+
+    for (i = 0; i < sp_toplistbrowse_num_artists(result); i++) {
+        json_builder_begin_object(ctx->jb);
+        sp_artist* artist = sp_toplistbrowse_artist(result, i);
+        jb_add_string(ctx->jb, "artist", sp_artist_name(artist));
+        sp_link_as_string(sp_link_create_from_artist(artist), uri, 1024);
+
+        jb_add_string(ctx->jb, "uri", uri);
+        json_builder_end_object(ctx->jb);
+    }
+    json_builder_end_array(ctx->jb);
+
+    
+    json_builder_set_member_name(ctx->jb, "albums");
+        json_builder_begin_array(ctx->jb);
+
+    for (i = 0; i < sp_toplistbrowse_num_albums(result); i++) {
+        json_builder_begin_object(ctx->jb);
+        sp_album* album = sp_toplistbrowse_album(result, i);
+        jb_add_string(ctx->jb, "title", sp_album_name(album));
+        jb_add_string(ctx->jb, "artist", sp_artist_name(sp_album_artist(album)));
+        sp_link_as_string(sp_link_create_from_album(album), uri, 1024);
+        jb_add_string(ctx->jb, "uri", uri);
+        json_builder_end_object(ctx->jb);
+    }
+    json_builder_end_array(ctx->jb);
+   
+    json_builder_end_object(ctx->jb);
+
+    sp_toplistbrowse_release(result);
+
+    command_end(ctx);
 }
 
 
