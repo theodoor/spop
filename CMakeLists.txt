@@ -213,10 +213,17 @@ set(SRC
   ${PLUGIN_SAVESTATE}
   ${PLUGIN_SCROBBLE}
 )
+
 set_source_files_properties(${SRC}
-  COMPILE_FLAGS "-O2 -Wall -Werror"
+  COMPILE_FLAGS "-g -Wall -Werror"
+    
 )
 include_directories(src)
+
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
+SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -pg")
+
 
 # System-wide installation
 install(TARGETS ${targets}

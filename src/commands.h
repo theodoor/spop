@@ -90,5 +90,6 @@ gboolean search(command_context* ctx, const gchar* query);
 gboolean login(command_context* ctx, const gchar* username, const gchar* passwd);
 gboolean logout(command_context*);
 
+gboolean toplist(command_context* ctx, const gchar* arg);
 
 #endif

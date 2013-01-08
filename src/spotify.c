@@ -163,6 +163,19 @@ void session_logout() {
     if (g_session)
         sp_session_logout(g_session);
 }
+sp_error session_remote_login(const char* username, const char* password) {
+    g_debug("Logging in...");
+    if (!g_session)
+        g_error("Session is not ready.");
+
+    return sp_session_login(g_session, username, password, TRUE, NULL);
+}
+sp_error session_remote_logout() {
+    g_debug("Logging out...");
+    if (!g_session)
+        g_error("Session is not ready.");
+    return sp_session_logout(g_session);
+}
 
 
 /***************************
@@ -602,6 +615,11 @@ sp_search* search_create(const gchar* query, search_complete_cb* callback, gpoin
                             SP_SEARCH_STANDARD, callback, userdata);
 }
 
+
+sp_toplistbrowse* toplistbrowse_create(sp_toplisttype type, sp_toplistregion region, const gchar* username, toplistbrowse_complete_cb* callback, gpointer userdata)
+{
+        return sp_toplistbrowse_create(g_session, type, region, username, callback, userdata);
+}
 
 /*************************
  *** Events management ***

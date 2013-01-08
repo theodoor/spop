@@ -72,6 +72,8 @@ static command_full_descriptor g_commands[] = {
     { "qclear",  CT_FUNC, { clear_queue,        {CA_NONE}}},
     { "qrm",     CT_FUNC, { remove_queue_item,  {CA_INT, CA_NONE}}},
     { "qrm",     CT_FUNC, { remove_queue_items, {CA_INT, CA_INT}}},
+    
+    { "toplist", CT_FUNC, { toplist, {CA_STR}}},
 
     { "play",    CT_FUNC, { play_playlist, {CA_INT, CA_NONE}}},
     { "play",    CT_FUNC, { play_track,    {CA_INT, CA_INT}} },
@@ -95,6 +97,7 @@ static command_full_descriptor g_commands[] = {
 
     { "uinfo",   CT_FUNC, { uri_info, {CA_URI, CA_NONE}}},
     { "uadd",    CT_FUNC, { uri_add,  {CA_URI, CA_NONE}}},
+    { "uadd",    CT_FUNC, { uri_add,  {CA_URI, CA_INT}}},
     { "uplay",   CT_FUNC, { uri_play, {CA_URI, CA_NONE}}},
     { "ustar", CT_FUNC, { uri_star, {CA_URI, CA_NONE}}},
 
@@ -377,7 +380,7 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
     if (str && chan->is_writeable) {
         status = g_io_channel_write_chars(chan, str, -1, NULL, &err);
         if (status != G_IO_STATUS_NORMAL) {
-            if (err)
+            if (err == NULL)
                 g_debug("[iw:%d] Can't write to IO channel (%d)", client, status);
             else
                 g_debug("[iw:%d] Can't write to IO channel (%d): %s", client, status, err->message);
@@ -387,7 +390,7 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
 
     status = g_io_channel_flush(chan, &err);
     if (status != G_IO_STATUS_NORMAL) {
-        if (err)
+        if (err == NULL)
             g_debug("[iw:%d] Can't flush IO channel (%d)", client, status);
         else
             g_debug("[iw:%d] Can't flush IO channel (%d): %s", client, status, err->message);

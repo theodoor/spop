@@ -34,6 +34,9 @@ void session_init();
 void session_login(const char* username, const char* password);
 void session_logout();
 
+sp_error session_remote_login(const char* username, const char* password);
+sp_error session_remote_logout();
+
 /* Playlist management */
 int playlists_len();
 sp_playlist* playlist_get(int nb);
@@ -78,6 +81,8 @@ gboolean track_get_image_file(sp_track* track, gchar** filename);
 sp_albumbrowse* albumbrowse_create(sp_album* album, albumbrowse_complete_cb* callback, gpointer userdata);
 sp_artistbrowse* artistbrowse_create(sp_artist* artist, artistbrowse_complete_cb* callback, gpointer userdata);
 sp_search* search_create(const gchar* query, search_complete_cb* callback, gpointer userdata);
+
+sp_toplistbrowse* toplistbrowse_create(sp_toplisttype type, sp_toplistregion region, const gchar* username, toplistbrowse_complete_cb* callback, gpointer userdata);
 
 /* Events management */
 gboolean session_libspotify_event(gpointer data);

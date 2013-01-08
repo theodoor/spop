@@ -30,6 +30,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/*for toplist*/
+#include <string.h>
+#include <ctype.h>
+
 #include "spop.h"
 #include "commands.h"
 #include "config.h"
@@ -1197,6 +1201,12 @@ gboolean uri_add(command_context* ctx, sp_link* lnk) {
     return _uri_add_play(ctx, lnk, FALSE);
 }
 
+gboolean uri_add_playlist(command_context* ctx, sp_link* lnk, guint idx)
+{
+     return TRUE;
+}
+
+
 gboolean uri_play(command_context* ctx, sp_link* lnk) {
     return _uri_add_play(ctx, lnk, TRUE);
 }
@@ -1379,12 +1389,149 @@ gboolean search(command_context* ctx, const gchar* query) {
 }
 
 gboolean login(command_context* ctx, const gchar* username, const gchar* passwd){
-    session_login(username, passwd);
+    sp_error login = session_remote_login(username, passwd);
+    if(login != SP_ERROR_OK){
+        jb_add_string(ctx->jb, "error", sp_error_message(login));
+    }
+    else{
+       jb_add_string(ctx->jb, "login", "succes");
+    }
     return TRUE;
 }
 
 gboolean logout(command_context* ctx){
-    session_logout();
+    sp_error logout = session_remote_logout();
+    if(logout != SP_ERROR_OK){
+        jb_add_string(ctx->jb, "error", sp_error_message(logout));
+    }
+    else{
+        jb_add_string(ctx->jb, "logout", "succes");
+    }
     return TRUE;
 }
+
+static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
+        command_context* ctx = (command_context*) userdata;
+        
+        int i;
+        
+        json_builder_set_member_name(ctx->jb, "toplist");
+        
+        json_builder_begin_object(ctx->jb);
+        
+        json_builder_set_member_name(ctx->jb, "result");
+                     
+        json_builder_begin_array(ctx->jb);
+        
+        
+        
+        // We print from all types. Only one of the loops will acually yield anything.
+
+        for(i = 0; i < sp_toplistbrowse_num_artists(result); i++)
+        {
+            json_builder_begin_object(ctx->jb);
+            sp_artist* artist = sp_toplistbrowse_artist(result, i);
+            jb_add_string(ctx->jb, "artist", sp_artist_name(artist));
+            json_builder_end_object(ctx->jb);
+        }
+            
+        for(i = 0; i < sp_toplistbrowse_num_albums(result); i++)
+        {
+            json_builder_begin_object(ctx->jb);
+            sp_album* album = sp_toplistbrowse_album(result, i);
+            jb_add_string(ctx->jb, "album", sp_album_name(album));
+            json_builder_end_object(ctx->jb);
+        }
+
+            
+        for(i = 0; i < sp_toplistbrowse_num_tracks(result); i++)
+        {
+            json_builder_begin_object(ctx->jb);
+            sp_track* track = sp_toplistbrowse_track(result, i);
+            jb_add_string(ctx->jb, "tracks", sp_track_name(track));
+            json_builder_end_object(ctx->jb);
+        }
+       
+        
+        json_builder_end_array(ctx->jb);
+        json_builder_end_object(ctx->jb);
+   
+        sp_toplistbrowse_release(result);
+        
+         command_end(ctx);
+}
+
+
+static void toplist_usage(command_context* ctx)
+{
+    jb_add_string(ctx->jb, "error" ,"Usage: toplist / (charts) | ( (tracks | albums | artists) / (global | region / <countrycode> | user / <username>) )");
+}
+
+
+gboolean toplist(command_context* ctx, const gchar* arg){
+    	sp_toplisttype type;
+	sp_toplistregion region;
+        gchar** argv;
+        gint argc;
+        gchar* username;
+        
+        argv = g_strsplit(arg, "/", 0);
+        argc = g_strv_length(argv);
+        
+        if(argc == 2) {
+            if(!g_ascii_strcasecmp(argv[1], "charts"))
+                //toplist_charts(ctx);
+                return TRUE;
+        }
+	if(argc < 3) {
+		toplist_usage(ctx);
+		return TRUE;
+        }
+
+        if(!g_ascii_strcasecmp(argv[1], "artists"))
+		type = SP_TOPLIST_TYPE_ARTISTS;
+        else if(!g_ascii_strcasecmp(argv[1], "albums"))
+		type = SP_TOPLIST_TYPE_ALBUMS;     
+        else if(!g_ascii_strcasecmp(argv[1], "tracks"))
+		type = SP_TOPLIST_TYPE_TRACKS;    
+        else {
+		toplist_usage(ctx);
+		return TRUE;
+	}
+
+
+        if(!g_ascii_strcasecmp(argv[2], "global"))
+                region = SP_TOPLIST_REGION_EVERYWHERE;
+        else if(!g_ascii_strcasecmp(argv[2], "user")){
+                region = SP_TOPLIST_REGION_USER;
+
+                if(argc != 4 || strlen(argv[3]) < 0) {
+                        toplist_usage(ctx);
+                        return TRUE;
+                }
+                username = g_strdup(argv[3]);
+
+        }else if(!g_ascii_strcasecmp(argv[2], "region")) {
+
+		if(argc != 4 || strlen(argv[3]) != 2) {
+			toplist_usage(ctx);
+			return TRUE;
+		}
+
+                int i;
+                for (i = 0; argv[3][i]; i++)
+                    argv[3][i] = toupper(argv[3][i]);
+
+		region = SP_TOPLIST_REGION(argv[3][0], argv[3][1]);
+	} else {
+		toplist_usage(ctx);
+		return TRUE;
+        }
+
+        toplistbrowse_create(type, region, (const char*)username, _toplist_cb, ctx);
+	return FALSE;
+}
+
+
+
 /* }}} */
