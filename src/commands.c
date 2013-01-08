@@ -1414,6 +1414,7 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
         command_context* ctx = (command_context*) userdata;
         
         int i;
+        gchar uri[1024];
         
         json_builder_set_member_name(ctx->jb, "toplist");
         
@@ -1425,6 +1426,8 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
         
         
         
+        
+        
         // We print from all types. Only one of the loops will acually yield anything.
 
         for(i = 0; i < sp_toplistbrowse_num_artists(result); i++)
@@ -1432,6 +1435,9 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
             json_builder_begin_object(ctx->jb);
             sp_artist* artist = sp_toplistbrowse_artist(result, i);
             jb_add_string(ctx->jb, "artist", sp_artist_name(artist));
+            sp_link_as_string(sp_link_create_from_artist(artist), uri, 1024);
+            
+            jb_add_string(ctx->jb, "uri", uri);
             json_builder_end_object(ctx->jb);
         }
             
@@ -1440,6 +1446,9 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
             json_builder_begin_object(ctx->jb);
             sp_album* album = sp_toplistbrowse_album(result, i);
             jb_add_string(ctx->jb, "album", sp_album_name(album));
+            jb_add_string(ctx->jb, "artist",sp_artist_name(sp_album_artist(album)));
+            sp_link_as_string(sp_link_create_from_album(album), uri, 1024);
+            jb_add_string(ctx->jb, "uri", uri);
             json_builder_end_object(ctx->jb);
         }
 
@@ -1449,6 +1458,9 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
             json_builder_begin_object(ctx->jb);
             sp_track* track = sp_toplistbrowse_track(result, i);
             jb_add_string(ctx->jb, "tracks", sp_track_name(track));
+            sp_link_as_string(sp_link_create_from_track(track, 0), uri, 1024);
+            jb_add_string(ctx->jb, "uri", uri);
+            jb_add_string(ctx->jb, "artist", sp_artist_name(sp_track_artist(track, 0)));
             json_builder_end_object(ctx->jb);
         }
        
