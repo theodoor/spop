@@ -226,7 +226,6 @@ gboolean list_playlists(command_context* ctx) {
     sp_playlist* pl;
     sp_playlist_type pt;
     const char* pn;
-    gchar* pfn;
 
     n = playlists_len();
     json_builder_set_member_name(ctx->jb, "playlists");
@@ -239,7 +238,7 @@ gboolean list_playlists(command_context* ctx) {
             g_debug("Playlist %d is a folder start", i);
 
             json_builder_begin_object(ctx->jb);
-            pfn = playlist_folder_name(i);
+            gchar* pfn = playlist_folder_name(i);
             jb_add_string(ctx->jb, "name", pfn);
             g_free(pfn);
 
@@ -358,7 +357,8 @@ gboolean status(command_context* ctx) {
     jb_add_int(ctx->jb, "total_tracks", total_tracks);
     if(get_username(&username)){
         jb_add_string(ctx->jb, "login_status", "logged_in");
-        jb_add_string(ctx->jb, "username", username);
+        jb_add_string(ctx->jb, "username", username); 
+        g_free(username);
     }
     else{
         jb_add_string(ctx->jb, "login_status", "logged_out");
@@ -380,7 +380,7 @@ gboolean status(command_context* ctx) {
         jb_add_string(ctx->jb, "uri", track_link);
         jb_add_int(ctx->jb, "popularity", track_popularity);
         jb_add_string(ctx->jb, "image", track_image);
-       
+   
         g_free(track_name);
         g_free(track_artist);
         g_free(track_album);
@@ -714,7 +714,7 @@ static void _uri_info_album_cb(sp_albumbrowse* ab, gpointer userdata) {
     json_tracks_array(tracks, ctx->jb);
     json_builder_end_array(ctx->jb);
     g_array_free(tracks, TRUE);
-
+   
     jb_add_string(ctx->jb, "review", sp_albumbrowse_review(ab));
 
  _uiac_clean:
@@ -773,7 +773,7 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
             jb_add_string(ctx->jb, "uri", uri);
         }
         sp_link_release(lnk);
-
+        sp_artist_release(albart);
         json_builder_end_object(ctx->jb);
     }
     json_builder_end_array(ctx->jb);
@@ -1205,7 +1205,7 @@ gboolean uri_add(command_context* ctx, sp_link* lnk) {
 
 gboolean uri_add_playlist(command_context* ctx, sp_link* lnk, guint idx)
 {
-     return TRUE;
+    return TRUE;
 }
 
 
@@ -1476,11 +1476,12 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
     for (i = 0; i < sp_toplistbrowse_num_albums(result); i++) {
         json_builder_begin_object(ctx->jb);
         sp_album* album = sp_toplistbrowse_album(result, i);
+        sp_artist* artist = sp_album_artist(album);
+        jb_add_string(ctx->jb, "artist", sp_artist_name(artist));
         jb_add_string(ctx->jb, "title", sp_album_name(album));
-        jb_add_string(ctx->jb, "artist", sp_artist_name(sp_album_artist(album)));
         sp_link_as_string(sp_link_create_from_album(album), uri, 1024);
         jb_add_string(ctx->jb, "uri", uri);
-        json_builder_end_object(ctx->jb);
+        json_builder_end_object(ctx->jb);        
     }
     json_builder_end_array(ctx->jb);
    
@@ -1494,7 +1495,7 @@ static void _toplist_cb(sp_toplistbrowse *result, gpointer userdata) {
 
 static void toplist_usage(command_context* ctx)
 {
-    jb_add_string(ctx->jb, "error" ,"Usage: toplist / (charts) | ( (tracks | albums | artists) / (global | region / <countrycode> | user / <username>) )");
+    jb_add_string(ctx->jb, "error" ,"Usage: toplist /  ( (tracks | albums | artists) / (global | region / <countrycode> | user / <username>) )");
 }
 
 
@@ -1559,7 +1560,7 @@ gboolean toplist(command_context* ctx, const gchar* arg){
         }
 
         toplistbrowse_create(type, region, (const char*)username, _toplist_cb, ctx);
-	return FALSE;
+        return FALSE;
 }
 
 

@@ -658,11 +658,11 @@ gboolean track_set_starred(sp_track* track){
 
 gboolean get_username(gchar** username){
     if(sp_session_user(g_session)){
-        *username = (gchar*)sp_user_canonical_name(sp_session_user(g_session));
+        *username = g_strdup((gchar*)sp_user_canonical_name(sp_session_user(g_session)));
         return TRUE;
     }
     else{
-        *username = "No user";
+        *username = g_strdup("No user");
         return FALSE;
     }
 }
