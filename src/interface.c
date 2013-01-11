@@ -250,7 +250,7 @@ gboolean interface_client_event(GIOChannel* source, GIOCondition condition, gpoi
     command_result cr = CR_OK;
 
     client = g_io_channel_unix_get_fd(source);
-
+   
     /* Ready for reading? */
     if (condition & G_IO_IN) {
         buffer = g_string_sized_new(1024);
@@ -266,7 +266,7 @@ gboolean interface_client_event(GIOChannel* source, GIOCondition condition, gpoi
             goto ice_client_clean;
         }
         else if (status != G_IO_STATUS_NORMAL) {
-            g_debug("[ice:%d] Can't read from IO channel: %s", client, err->message);
+            g_debug("[ice:%d] Can't read from IO channel(%s): %s ", client, source->encoding, err->message);                           
             goto ice_client_clean;
         }
 
@@ -388,6 +388,7 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
         }
     }
 
+    //FIXME
     status = g_io_channel_flush(chan, &err);
     if (status != G_IO_STATUS_NORMAL) {
         if (err == NULL)

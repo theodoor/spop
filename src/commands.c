@@ -39,6 +39,8 @@
 #include "config.h"
 #include "queue.h"
 #include "spotify.h"
+
+#include "plugin.h"
 #include "utils.h"
 
 /* {{{ JSON helpers */
@@ -1388,15 +1390,25 @@ gboolean search(command_context* ctx, const gchar* query) {
     }
 }
 
+static void _login_cb(session_callback_type type, gpointer data, gpointer userdata) {
+    sp_error error = (sp_error)data;
+    command_context* ctx = (command_context*) userdata;
+    jb_add_string(ctx->jb, "error", sp_error_message(error));
+    session_remove_callback(_login_cb, ctx);
+    
+    command_end(ctx);
+}
+
 gboolean login(command_context* ctx, const gchar* username, const gchar* passwd){
-    sp_error login = session_remote_login(username, passwd);
-    if(login != SP_ERROR_OK){
+    session_remote_login(username, passwd);
+    /*if(login != SP_ERROR_OK){
         jb_add_string(ctx->jb, "error", sp_error_message(login));
     }
     else{
        jb_add_string(ctx->jb, "login", "succes");
-    }
-    return TRUE;
+    }*/
+    session_add_callback(_login_cb, ctx);
+    return FALSE;
 }
 
 gboolean logout(command_context* ctx){

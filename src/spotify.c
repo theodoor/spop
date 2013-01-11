@@ -167,7 +167,7 @@ sp_error session_remote_login(const char* username, const char* password) {
     g_debug("Logging in...");
     if (!g_session)
         g_error("Session is not ready.");
-
+    
     return sp_session_login(g_session, username, password, TRUE, NULL);
 }
 sp_error session_remote_logout() {
@@ -671,8 +671,13 @@ gboolean get_username(gchar** username){
  *** Callbacks, not to be used directly ***
  ******************************************/
 void cb_logged_in(sp_session* session, sp_error error) {
+    session_callback_data scbd;
+    
     if (error != SP_ERROR_OK){
         g_warning("Login failed: %s", sp_error_message(error));
+        scbd.type = SPOP_SESSION_FAILED;
+        scbd.data = (gpointer*)error;
+        g_list_foreach(g_session_callbacks, session_call_callback, &scbd);
         return;
     }
     else g_info("Logged in.");
@@ -684,10 +689,10 @@ void cb_logged_in(sp_session* session, sp_error error) {
         g_error("Could not get the playlist container.");
 
     /* Then call callbacks */
-    session_callback_data scbd;
-    scbd.type = SPOP_SESSION_LOGGED_IN;
+   scbd.type = SPOP_SESSION_LOGGED_IN;
     scbd.data = NULL;
     g_list_foreach(g_session_callbacks, session_call_callback, &scbd);
+    
 }
 
 void cb_logged_out(sp_session* session) {
@@ -720,6 +725,7 @@ int cb_music_delivery(sp_session* session, const sp_audioformat* format, const v
     return n;
 }
 void cb_play_token_lost(sp_session* session) {
+    queue_toggle(TRUE);
     g_warning("Play token lost.");
 }
 void cb_log_message(sp_session* session, const char* data) {

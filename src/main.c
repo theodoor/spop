@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
     /* Init login */
     session_init();
     session_login(username, password);
-
+    
     /* Init various subsystems */
     interface_init();
 
