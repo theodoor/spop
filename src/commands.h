@@ -92,4 +92,6 @@ gboolean logout(command_context*);
 
 gboolean toplist(command_context* ctx, const gchar* arg);
 
+gboolean notify_when_play_token_lost(command_context* ctx);
+
 #endif

@@ -64,7 +64,7 @@ static void json_tracks_array(GArray* tracks, JsonBuilder* jb) {
     bool track_avail;
     bool track_starred;
     guint track_duration;
-    int track_popularity;
+    gint track_popularity;
     gchar* track_name;
     gchar* track_artist;
     gchar* track_album;
@@ -86,17 +86,17 @@ static void json_tracks_array(GArray* tracks, JsonBuilder* jb) {
         jb_add_string(jb, "album", track_album);
         jb_add_int(jb, "duration", track_duration);
         jb_add_string(jb, "uri", track_link);
-        jb_add_bool(jb, "available", track_avail);
+         jb_add_bool(jb, "available", track_avail);
         jb_add_int(jb, "popularity", track_popularity);
         jb_add_int(jb, "index", i+1);
         jb_add_bool(jb, "starred", track_starred);
         json_builder_end_object(jb);
-
+       
         g_free(track_name);
         g_free(track_artist);
         g_free(track_album);
         g_free(track_link);
-    }
+    }    
 }
 static void json_playlist_offline_status(sp_playlist* pl, JsonBuilder* jb) {
     sp_playlist_offline_status pos = playlist_get_offline_status(pl);
@@ -201,17 +201,22 @@ gboolean command_run(command_finalize_func finalize, gpointer finalize_data, com
 void command_end(command_context* ctx) {
     json_builder_end_object(ctx->jb);
     JsonGenerator* gen = json_generator_new();
+    JsonNode *root;
+    
     g_object_set(gen, "pretty", config_get_bool_opt("pretty_json", FALSE), NULL);
-    json_generator_set_root(gen, json_builder_get_root(ctx->jb));
-
+    root = json_builder_get_root(ctx->jb);
+    json_generator_set_root(gen, root);
     gchar* str = json_generator_to_data(gen, NULL);
-    g_object_unref(gen);
-    g_object_unref(ctx->jb);
-
-    gchar* strn = g_strconcat(str, "\n", NULL);
+    
+    json_node_free(root);
+    g_object_unref(gen);    
+    g_object_unref(ctx->jb);      
+      
+    gchar* strn = g_strconcat(str, "\n", NULL);       
     g_free(str);
 
     ctx->finalize(strn, ctx->finalize_data);
+    
     g_free(strn);
     g_free(ctx);
 }
@@ -1399,6 +1404,10 @@ static void _login_cb(session_callback_type type, gpointer data, gpointer userda
     command_end(ctx);
 }
 
+
+
+
+
 gboolean login(command_context* ctx, const gchar* username, const gchar* passwd){
     session_remote_login(username, passwd);
     /*if(login != SP_ERROR_OK){
@@ -1563,6 +1572,21 @@ gboolean toplist(command_context* ctx, const gchar* arg){
         return FALSE;
 }
 
+
+static void _play_token_lost_cb(session_callback_type type, gpointer data, gpointer userdata) {
+    command_context* ctx = (command_context*) userdata;
+    if(type == SPOP_PLAY_TOKEN_LOST){
+        jb_add_string(ctx->jb, "error", "Play Token Lost."); 
+        session_remove_callback(_play_token_lost_cb, ctx);
+        command_end(ctx);
+    }
+}
+
+gboolean notify_when_play_token_lost(command_context* ctx)
+{
+    session_add_callback(_play_token_lost_cb, ctx);
+    return FALSE;
+}
 
 
 /* }}} */

@@ -405,7 +405,7 @@ void track_get_data(sp_track* track, gchar** name, gchar** artist, gchar** album
     sp_track_add_ref(track);
     if (!sp_track_is_loaded(track)) {
         sp_track_release(track);
-        return;
+       return;
     }
 
     /* Begin loading everything */
@@ -725,7 +725,12 @@ int cb_music_delivery(sp_session* session, const sp_audioformat* format, const v
     return n;
 }
 void cb_play_token_lost(sp_session* session) {
-    queue_toggle(TRUE);
+    session_callback_data scbd;
+
+    queue_toggle(TRUE);  
+   
+    scbd.type = SPOP_PLAY_TOKEN_LOST;
+    g_list_foreach(g_session_callbacks, session_call_callback, &scbd);
     g_warning("Play token lost.");
 }
 void cb_log_message(sp_session* session, const char* data) {

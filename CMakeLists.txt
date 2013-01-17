@@ -221,7 +221,7 @@ set(SRC
 )
 
 set_source_files_properties(${SRC}
-  COMPILE_FLAGS "-g -std=c11 -Wall -Werror"
+  COMPILE_FLAGS "-g -std=c11 -Wall"
     
 )
 include_directories(src)

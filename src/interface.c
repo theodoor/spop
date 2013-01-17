@@ -103,6 +103,8 @@ static command_full_descriptor g_commands[] = {
 
     { "search",  CT_FUNC, { search, {CA_STR, CA_NONE}}},
     
+    { "notify-when-play-token-lost", CT_FUNC, { notify_when_play_token_lost, {CA_NONE}}}, 
+    
     { "login", CT_FUNC, { login, {CA_STR, CA_STR}}},
     { "logout", CT_FUNC, { logout, {CA_NONE}}},
     
@@ -380,10 +382,10 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
     if (str && chan->is_writeable) {
         status = g_io_channel_write_chars(chan, str, -1, NULL, &err);
         if (status != G_IO_STATUS_NORMAL) {
-            if (err == NULL)
-                g_debug("[iw:%d] Can't write to IO channel (%d)", client, status);
+            if (err)
+               g_debug("[iw:%d] Can't write to IO channel (%d): %s", client, status, err->message);
             else
-                g_debug("[iw:%d] Can't write to IO channel (%d): %s", client, status, err->message);
+               g_debug("[iw:%d] Can't write to IO channel (%d): ", client, status);
             return FALSE;
         }
     }
@@ -391,18 +393,18 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
     //FIXME
     status = g_io_channel_flush(chan, &err);
     if (status != G_IO_STATUS_NORMAL) {
-        if (err == NULL)
-            g_debug("[iw:%d] Can't flush IO channel (%d)", client, status);
-        else
+        if (err)
             g_debug("[iw:%d] Can't flush IO channel (%d): %s", client, status, err->message);
+        else
+            g_debug("[iw:%d] Can't flush IO channel (%d)", client, status);            
         return FALSE;
     }
-
+    
     return TRUE;
 }
 
 void interface_finalize(const gchar* str, GIOChannel* chan) {
-    interface_write(chan, str);
+   interface_write(chan, str);    
 }
 
 
@@ -445,6 +447,7 @@ void interface_notify_chan(gpointer data, gpointer user_data) {
     GString* str = user_data;
 
     interface_write(chan, str->str);
+    
 }
 
 void interface_notify_callback(gpointer data, gpointer user_data) {

@@ -62,6 +62,7 @@ typedef enum {
     SPOP_SESSION_LOAD,
     SPOP_SESSION_UNLOAD,
     SPOP_SESSION_FAILED,
+    SPOP_PLAY_TOKEN_LOST,
 } session_callback_type;
 typedef void (*spop_session_callback_ptr)(session_callback_type type, gpointer data, gpointer user_data);
 void session_call_callback(gpointer data, gpointer user_data);
