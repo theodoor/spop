@@ -79,7 +79,7 @@ target_link_libraries(spopd dl ${SPOTIFY_LIBRARIES} ${GLIB2_LIBRARIES}
 set(targets ${targets} spopd)
 
 # Audio plugin: OSS
-if(EXISTS plugins/oss.c)
+if(EXISTS plugins/oss.c AND EXISTS sys/soundcard.h)
 set(AUDIO_OSS
   plugins/oss.c
 )

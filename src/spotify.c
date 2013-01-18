@@ -44,7 +44,7 @@
 static sp_playlistcontainer* g_container;
 static sp_playlist* g_starred_playlist = NULL;
 
-static sp_session* g_session = NULL;
+static sp_session* g_session;
 
 static guint g_audio_time = 0;
 static unsigned int g_audio_samples = 0;

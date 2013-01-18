@@ -764,8 +764,8 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
     json_builder_set_member_name(ctx->jb, "albums");
     json_builder_begin_array(ctx->jb);
     for (i=0; i < n; i++) {
-        sp_album* alb = sp_artistbrowse_album(arb, i);
-        json_builder_begin_object(ctx->jb);
+       sp_album* alb = sp_artistbrowse_album(arb, i);
+       json_builder_begin_object(ctx->jb);
 
         sp_artist* albart = sp_album_artist(alb);
         jb_add_string(ctx->jb, "artist", sp_artist_name(albart));
@@ -778,7 +778,6 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
             jb_add_string(ctx->jb, "uri", uri);
         }
         sp_link_release(lnk);
-        sp_artist_release(albart);
         json_builder_end_object(ctx->jb);
     }
     json_builder_end_array(ctx->jb);
@@ -1409,14 +1408,8 @@ static void _login_cb(session_callback_type type, gpointer data, gpointer userda
 
 
 gboolean login(command_context* ctx, const gchar* username, const gchar* passwd){
-    session_remote_login(username, passwd);
-    /*if(login != SP_ERROR_OK){
-        jb_add_string(ctx->jb, "error", sp_error_message(login));
-    }
-    else{
-       jb_add_string(ctx->jb, "login", "succes");
-    }*/
     session_add_callback(_login_cb, ctx);
+    session_remote_login(username, passwd);
     return FALSE;
 }
 
