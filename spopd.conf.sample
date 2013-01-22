@@ -10,7 +10,7 @@ spotify_username = USERNAME
 spotify_password = PASSWORD
 
 # Prefer high bitrate (320k instead of 160k). This is the default.
-#high_bitrate = true
+high_bitrate = true
 
 # Prefer high bitrate for offlinesync. This is the default.
 #offline_high_bitrate = true
@@ -20,7 +20,10 @@ spotify_password = PASSWORD
 #cache_size = 0
 
 # Number of results returned by the search command.
-#search_results = 100
+search_results = 50
+
+# Max results returned when display information about given Spotify URI
+#max_items = 50
 
 # Audio plugin -- right now, three plugins are available:
 # - ao: uses libao, a simple and very portable library. Recommended for people
@@ -32,14 +35,14 @@ spotify_password = PASSWORD
 #   Probably not as lightweight as ao and oss, but supports more platform, and -
 #   adds the possibility to apply effects to the audio output. More details in -
 #   the [sox] section.
-audio_output = oss
+audio_output = ao
 
 # Address and port on which spopd should listen for commands.
 # The address can be IPv4 (x.x.x.x) or IPv6 (a:b:c::d).
 # Use 0.0.0.0 or :: to listen on all the available interfaces.
 # Default is port 6602 on all the available loopback addresses (127.0.0.1 and
 # ::1).
-#listen_address = 127.0.0.1
+listen_address = 0.0.0.0
 #listen_port = 6602
 
 # Path to the log file. If blank, messages will not be saved anywhere.

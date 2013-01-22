@@ -745,6 +745,10 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
 
     /* Tracks... */
     n = sp_artistbrowse_num_tracks(arb);
+    if(n > config_get_int_opt("max_items", 1000))
+    {
+        n = config_get_int_opt("max_items", 1000);
+    }
     GArray* tracks = g_array_sized_new(FALSE, FALSE, sizeof(sp_track*), n);
     if (!tracks)
         g_error("Can't allocate array of %d tracks.", n);
