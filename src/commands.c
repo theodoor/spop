@@ -185,6 +185,16 @@ gboolean command_run(command_finalize_func finalize, gpointer finalize_data, com
             gboolean (*cmd)(command_context*, sp_link*) = desc->func;
             ret = cmd(ctx, arg1);
         }
+        else if(desc->args[1] == CA_INT){
+              _str_to_uint(arg2, argv[2]);
+
+            if(desc->args[2] == CA_INT){
+                   _str_to_uint(arg3, argv[3]);
+
+                gboolean (*cmd)(command_context*, sp_link*, guint, guint) = desc->func;
+                ret = cmd(ctx, arg1, arg2, arg3);
+            }
+        }
         else
             g_error("Unknown argument type");
     }
@@ -727,11 +737,18 @@ static void _uri_info_album_cb(sp_albumbrowse* ab, gpointer userdata) {
     command_end(ctx);
 }
 
+
+
 /* Callback (from uri_info) to get artist data */
 static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
-    command_context* ctx = (command_context*) userdata;
+    gpointer* data = (gpointer*)userdata;
+    command_context* ctx = data[0];
+    size_t start = (size_t)data[1];
+    size_t stop = (size_t)data[2];
+    
     gchar uri[1024];
-    int i, n;
+    gint i, n, istop;
+    gboolean capped = FALSE;
 
     /* Check for error */
     sp_error err = sp_artistbrowse_error(arb);
@@ -745,16 +762,32 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
 
     /* Tracks... */
     n = sp_artistbrowse_num_tracks(arb);
-    if(n > config_get_int_opt("max_items", 1000))
-    {
-        n = config_get_int_opt("max_items", 1000);
+   
+    if(start && (gint)start > 1){
+        i = start;
     }
-    GArray* tracks = g_array_sized_new(FALSE, FALSE, sizeof(sp_track*), n);
+    else{
+        i = 0;
+    }
+    
+    if(stop && stop < n && stop > 1)
+    {
+        istop = stop;
+        capped = TRUE;
+    }
+    else{
+        istop = n;
+    }
+    
+    GArray* tracks = g_array_sized_new(FALSE, FALSE, sizeof(sp_track*), istop - i);
+  
     if (!tracks)
-        g_error("Can't allocate array of %d tracks.", n);
-    for (i=0; i < n; i++) {
+        g_error("Can't allocate array of %d tracks.", istop - i);
+    while (i < istop) {
+       
         sp_track* tr = sp_artistbrowse_track(arb, i);
         g_array_append_val(tracks, tr);
+         i++;
     }
 
     json_builder_set_member_name(ctx->jb, "tracks");
@@ -762,7 +795,10 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
     json_tracks_array(tracks, ctx->jb);
     json_builder_end_array(ctx->jb);
     g_array_free(tracks, TRUE);
-
+    if(capped){
+        jb_add_int(ctx->jb, "capped", istop);
+    }
+    
     /* Albums... */
     n = sp_artistbrowse_num_albums(arb);
     json_builder_set_member_name(ctx->jb, "albums");
@@ -810,6 +846,7 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
 
  _uiarc_clean:
     sp_artistbrowse_release(arb);
+    g_free(data);
     command_end(ctx);
 }
 
@@ -1037,7 +1074,14 @@ static gboolean _uri_add_track_cb(gpointer* data) {
 }
   /* }}} */
 
-gboolean uri_info(command_context* ctx, sp_link* lnk) {
+gboolean uri_info(command_context* ctx, sp_link* lnk){
+    
+    
+    return uri_info_cap(ctx, lnk, 0, 1000);
+}
+
+
+gboolean uri_info_cap(command_context* ctx, sp_link* lnk, gint start, gint stop) {
     sp_linktype type = sp_link_type(lnk);
     gboolean done = TRUE;
 
@@ -1096,7 +1140,11 @@ gboolean uri_info(command_context* ctx, sp_link* lnk) {
             break;
         }
         done = FALSE;
-        artistbrowse_create(artist, _uri_info_artist_cb, ctx);
+        gpointer* data = g_new(gpointer, 3);
+        data[0] = ctx;
+        data[1] = g_memdup(&start, sizeof(gint));
+        data[2] = g_memdup(&stop, sizeof(gint));
+        artistbrowse_create(artist, _uri_info_artist_cb, data);
         sp_link_release(lnk);
         break;
     }

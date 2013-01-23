@@ -31,7 +31,7 @@
 #include <libspotify/api.h>
 
 /* Commands management */
-#define MAX_CMD_ARGS 2
+#define MAX_CMD_ARGS 3
 typedef enum { CA_NONE=0, CA_INT, CA_STR, CA_URI } command_arg;
 typedef struct {
     void*       func;
@@ -81,6 +81,7 @@ gboolean offline_toggle(command_context* ctx, guint idx);
 gboolean image(command_context* ctx);
 
 gboolean uri_info(command_context* ctx, sp_link* lnk);
+gboolean uri_info_cap(command_context* ctx, sp_link* lnk, gint start, gint stop);
 gboolean uri_add(command_context* ctx, sp_link* lnk);
 gboolean uri_play(command_context* ctx, sp_link* lnk);
 gboolean uri_star(command_context* ctx, sp_link* lnk);
