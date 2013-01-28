@@ -743,8 +743,8 @@ static void _uri_info_album_cb(sp_albumbrowse* ab, gpointer userdata) {
 static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
     gpointer* data = (gpointer*)userdata;
     command_context* ctx = data[0];
-    size_t start = (size_t)data[1];
-    size_t stop = (size_t)data[2];
+    gint start = (gint)data[1];
+    gint stop = (gint)data[2];
     
     gchar uri[1024];
     gint i, n, istop;
@@ -847,6 +847,7 @@ static void _uri_info_artist_cb(sp_artistbrowse* arb, gpointer userdata) {
  _uiarc_clean:
     sp_artistbrowse_release(arb);
     g_free(data);
+        
     command_end(ctx);
 }
 
@@ -1142,8 +1143,8 @@ gboolean uri_info_cap(command_context* ctx, sp_link* lnk, gint start, gint stop)
         done = FALSE;
         gpointer* data = g_new(gpointer, 3);
         data[0] = ctx;
-        data[1] = g_memdup(&start, sizeof(gint));
-        data[2] = g_memdup(&stop, sizeof(gint));
+        data[1] = start;
+        data[2] = stop;
         artistbrowse_create(artist, _uri_info_artist_cb, data);
         sp_link_release(lnk);
         break;
