@@ -392,7 +392,8 @@ gboolean interface_write(GIOChannel* chan, const gchar* str) {
     }
 
     //FIXME
-    status = g_io_channel_flush(chan, &err);
+    if(chan)
+        status = g_io_channel_flush(chan, &err);
     if (status != G_IO_STATUS_NORMAL) {
         if (err)
             g_debug("[iw:%d] Can't flush IO channel (%d): %s", client, status, err->message);

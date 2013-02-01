@@ -161,7 +161,7 @@ void session_login(const char* username, const char* password) {
 void session_logout() {
     g_debug("Logging out...");
     if (g_session)
-        sp_session_logout(g_session);
+        sp_session_logout(g_session);    
 }
 sp_error session_remote_login(const char* username, const char* password) {
     g_debug("Logging in...");
@@ -243,7 +243,10 @@ void session_load(sp_track* track) {
     session_callback_data scbd;
 
     g_debug("Loading track.");
-
+    
+    if(!sp_session_user(g_session))
+        return;
+        
     error = sp_session_player_load(g_session, track);
     if (error != SP_ERROR_OK)
         g_error("Failed to load track: %s", sp_error_message(error));
